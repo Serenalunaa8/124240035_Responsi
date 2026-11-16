@@ -21,7 +21,6 @@ class _LandingScreenState extends State<LandingScreen>
   void initState() {
     super.initState();
 
-    // Controller animasi progress
     _progressController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3200),
@@ -32,10 +31,8 @@ class _LandingScreenState extends State<LandingScreen>
       curve: Curves.easeInOutCubic,
     );
 
-    // Animasi progress bar
     _progressController.repeat(reverse: true);
 
-    // Animasi shimmer
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -60,7 +57,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildSparkleDot(double size, {Color color = AppColors.portalGreen}) {
+  Widget _buildSparkleDot(double size, {Color color = const Color(0xFFB55FE6)}) {
     return Container(
       width: size,
       height: size,
@@ -70,7 +67,7 @@ class _LandingScreenState extends State<LandingScreen>
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.8),
-            blurRadius: size * 2,
+            blurRadius: size * 2.5,
             spreadRadius: 1,
           ),
         ],
@@ -80,27 +77,25 @@ class _LandingScreenState extends State<LandingScreen>
 
   @override
   Widget build(BuildContext context) {
-    const Color portalGreen = AppColors.portalGreen;
-    const Color surfaceLowest = AppColors.surfaceLowest;
+    const Color primaryViolet = Color(0xFFB55FE6);
     const Color surfaceBg = AppColors.background;
     const Color textMain = AppColors.textPrimary;
-    const Color textMuted = AppColors.textSecondary;
+    const Color textMuted = Color(0xFF8E9AA8);
 
     return Scaffold(
       backgroundColor: surfaceBg,
       body: Stack(
         children: [
-          // Partikel cahaya kosmik halus di latar belakang
           Positioned(top: 80, left: 40, child: _buildSparkleDot(3.5)),
-          Positioned(top: 220, left: 30, child: _buildSparkleDot(2.5)),
+          Positioned(top: 220, left: 30, child: _buildSparkleDot(2.5, color: const Color(0xFF38BDF8))),
           Positioned(top: 140, right: 35, child: _buildSparkleDot(3.0)),
-          Positioned(bottom: 230, right: 45, child: _buildSparkleDot(3.5)),
+          Positioned(bottom: 230, right: 45, child: _buildSparkleDot(3.5, color: const Color(0xFFFBBF24))),
 
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isCompact = constraints.maxHeight < 680;
-                final bannerSize = (constraints.maxHeight * 0.35).clamp(200.0, 280.0);
+                final bannerSize = (constraints.maxHeight * 0.35).clamp(180.0, 260.0);
 
                 return SingleChildScrollView(
                   child: ConstrainedBox(
@@ -116,59 +111,73 @@ class _LandingScreenState extends State<LandingScreen>
                           children: [
                             SizedBox(height: isCompact ? 4 : 10),
 
-                            // Bagian Tengah: Logo, Banner Poster & Judul
                             Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-
-                                // Banner Card dengan Glow Hijau di Sekitar Gambar Saja
                                 Stack(
                                   alignment: Alignment.center,
                                   children: [
-                                    // Glow hijau tepat di sekeliling gambar
                                     Container(
                                       width: bannerSize,
                                       height: bannerSize,
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
+                                        borderRadius: BorderRadius.circular(28),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: portalGreen.withValues(alpha: 0.45),
-                                            blurRadius: 26,
-                                            spreadRadius: 3,
+                                            color: primaryViolet.withValues(alpha: 0.3),
+                                            blurRadius: 36,
+                                            spreadRadius: 4,
                                           ),
                                           BoxShadow(
-                                            color: portalGreen.withValues(alpha: 0.2),
-                                            blurRadius: 42,
-                                            spreadRadius: 6,
+                                            color: const Color(0xFF8A3FFC).withValues(alpha: 0.2),
+                                            blurRadius: 50,
+                                            spreadRadius: 8,
                                           ),
                                         ],
                                       ),
                                     ),
-                                    // Gambar Banner
                                     Container(
                                       width: bannerSize,
                                       height: bannerSize,
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
+                                        color: const Color(0xFF131722),
+                                        borderRadius: BorderRadius.circular(28),
                                         border: Border.all(
-                                          color: portalGreen.withValues(alpha: 0.5),
+                                          color: primaryViolet.withValues(alpha: 0.5),
                                           width: 1.5,
                                         ),
                                       ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: Image.asset(
-                                        'assets/images/rickandmorty.jpg',
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Image.network(
-                                          'https://upload.wikimedia.org/wikipedia/en/c/c8/Rick_and_Morty_season_5.png',
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => Container(
-                                            color: const Color(0xFF141A21),
-                                            child: const Center(
-                                              child: Icon(Icons.movie_filter, color: portalGreen, size: 64),
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(22),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: primaryViolet.withValues(alpha: 0.12),
+                                                border: Border.all(
+                                                  color: primaryViolet.withValues(alpha: 0.35),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                Icons.rocket_launch_rounded,
+                                                color: primaryViolet,
+                                                size: 52,
+                                              ),
                                             ),
-                                          ),
+                                            const SizedBox(height: 14),
+                                            Text(
+                                              'MISSION FEED',
+                                              style: GoogleFonts.plusJakartaSans(
+                                                color: const Color(0xFF38BDF8),
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 11,
+                                                letterSpacing: 2.0,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -177,28 +186,27 @@ class _LandingScreenState extends State<LandingScreen>
 
                                 SizedBox(height: isCompact ? 18 : 28),
 
-                                // Judul aplikasi
                                 Text(
-                                  'MULTIVERSE',
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontSize: isCompact ? 19 : 22,
+                                  'SPACENEWS',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: isCompact ? 24 : 28,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: 2.0,
+                                    letterSpacing: 1.5,
                                     color: textMain,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'CHARACTER EXPLORER',
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontSize: isCompact ? 17 : 20,
+                                  'EXPLORER',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: isCompact ? 18 : 22,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 1.5,
-                                    color: portalGreen,
+                                    color: primaryViolet,
                                     shadows: [
                                       Shadow(
-                                        color: portalGreen.withValues(alpha: 0.6),
-                                        blurRadius: 10,
+                                        color: primaryViolet.withValues(alpha: 0.6),
+                                        blurRadius: 12,
                                       ),
                                     ],
                                   ),
@@ -207,10 +215,10 @@ class _LandingScreenState extends State<LandingScreen>
                                 SizedBox(height: isCompact ? 8 : 12),
 
                                 Text(
-                                  'Explore bizarre entities, variants, and rogue gods\nbeyond your native dimension.',
+                                  'Eksplorasi berita antariksa terkini,\nmisi luar angkasa, dan dokumentasi kosmis dunia.',
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontSize: isCompact ? 12 : 13,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: isCompact ? 12 : 13.5,
                                     height: 1.45,
                                     color: textMuted,
                                   ),
@@ -218,13 +226,11 @@ class _LandingScreenState extends State<LandingScreen>
                               ],
                             ),
 
-                            // Bagian Bawah: Kalibrasi Loading bar & Tombol Aksi "Open Portal"
                             Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const SizedBox(height: 16),
 
-                                // Status Bar Kalibrasi & Loading Bar yang Bergerak Aktif
                                 AnimatedBuilder(
                                   animation: _progressAnimation,
                                   builder: (context, child) {
@@ -245,16 +251,16 @@ class _LandingScreenState extends State<LandingScreen>
                                                     height: 6,
                                                     decoration: const BoxDecoration(
                                                       shape: BoxShape.circle,
-                                                      color: portalGreen,
+                                                      color: primaryViolet,
                                                       boxShadow: [
-                                                        BoxShadow(color: portalGreen, blurRadius: 6),
+                                                        BoxShadow(color: primaryViolet, blurRadius: 6),
                                                       ],
                                                     ),
                                                   ),
                                                   const SizedBox(width: 6),
                                                   Text(
-                                                    'FLUID CALIBRATION',
-                                                    style: GoogleFonts.spaceGrotesk(
+                                                    'TELEMETRY SYNC',
+                                                    style: GoogleFonts.plusJakartaSans(
                                                       fontSize: 10,
                                                       fontWeight: FontWeight.w700,
                                                       letterSpacing: 1.2,
@@ -265,10 +271,10 @@ class _LandingScreenState extends State<LandingScreen>
                                               ),
                                               Text(
                                                 '$percent%',
-                                                style: GoogleFonts.spaceGrotesk(
+                                                style: GoogleFonts.plusJakartaSans(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.bold,
-                                                  color: const Color(0xFF63B3ED), // Portal blue accent
+                                                  color: const Color(0xFF38BDF8),
                                                 ),
                                               ),
                                             ],
@@ -277,13 +283,12 @@ class _LandingScreenState extends State<LandingScreen>
 
                                         const SizedBox(height: 8),
 
-                                        // Progress bar
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(10),
                                           child: Container(
                                             height: 6,
                                             width: double.infinity,
-                                            color: const Color(0xFF141A21),
+                                            color: const Color(0xFF131722),
                                             child: Stack(
                                               children: [
                                                 FractionallySizedBox(
@@ -292,18 +297,17 @@ class _LandingScreenState extends State<LandingScreen>
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                       gradient: const LinearGradient(
-                                                        colors: [Color(0xFF4FD1C5), portalGreen],
+                                                        colors: [Color(0xFF8A3FFC), primaryViolet],
                                                       ),
                                                       boxShadow: [
                                                         BoxShadow(
-                                                          color: portalGreen.withValues(alpha: 0.8),
+                                                          color: primaryViolet.withValues(alpha: 0.8),
                                                           blurRadius: 8,
                                                         ),
                                                       ],
                                                     ),
                                                   ),
                                                 ),
-                                                // Efek gelombang cahaya bergerak di atas progress bar
                                                 AnimatedBuilder(
                                                   animation: _shimmerAnimation,
                                                   builder: (context, child) {
@@ -336,9 +340,9 @@ class _LandingScreenState extends State<LandingScreen>
 
                                         Text(
                                           currentProgress > 0.95
-                                              ? 'Portal stabilized • • •'
-                                              : 'Warping across dimensions • • •',
-                                          style: GoogleFonts.spaceGrotesk(
+                                              ? 'Telemetry synchronized • • •'
+                                              : 'Connecting to space network • • •',
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             color: textMuted.withValues(alpha: 0.8),
                                             letterSpacing: 0.5,
@@ -351,15 +355,19 @@ class _LandingScreenState extends State<LandingScreen>
 
                                 const SizedBox(height: 24),
 
-                                // Tombol aksi utama
                                 Container(
                                   width: double.infinity,
                                   height: 52,
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF8A3FFC), Color(0xFFB55FE6)],
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: portalGreen.withValues(alpha: 0.4),
+                                        color: primaryViolet.withValues(alpha: 0.4),
                                         blurRadius: 18,
                                         offset: const Offset(0, 4),
                                       ),
@@ -367,11 +375,10 @@ class _LandingScreenState extends State<LandingScreen>
                                   ),
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: portalGreen,
-                                      foregroundColor: surfaceLowest,
-                                      elevation: 0,
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
                                     ),
                                     onPressed: _navigateToLogin,
@@ -379,15 +386,16 @@ class _LandingScreenState extends State<LandingScreen>
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          'Open Portal',
-                                          style: GoogleFonts.spaceGrotesk(
+                                          'Mulai Eksplorasi',
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 16,
-                                            fontWeight: FontWeight.w700,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
                                             letterSpacing: 0.8,
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        const Icon(Icons.bolt, size: 20),
+                                        const Icon(Icons.rocket_launch_rounded, size: 20, color: Colors.white),
                                       ],
                                     ),
                                   ),

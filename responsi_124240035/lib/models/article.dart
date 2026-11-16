@@ -3,32 +3,44 @@ class Articles {
   final String title;
   final String authors;
   final String url;
-  final String image_url;
-  final String news_site;
+  final String imageUrl;
+  final String newsSite;
   final String summary;
-  final String published_at;
+  final String publishedAt;
 
   Articles({
     required this.id,
     required this.title,
     required this.authors,
     required this.url,
-    required this.image_url,
-    required this.news_site,
+    required this.imageUrl,
+    required this.newsSite,
     required this.summary,
-    required this.published_at,
+    required this.publishedAt,
   });
 
   factory Articles.fromJson(Map<String, dynamic> json) {
+    String authorText = 'Unknown Author';
+    if (json['authors'] != null && json['authors'] is List && (json['authors'] as List).isNotEmpty) {
+      final list = json['authors'] as List;
+      final names = list
+          .map((item) => item['name']?.toString() ?? '')
+          .where((name) => name.isNotEmpty)
+          .toList();
+      if (names.isNotEmpty) {
+        authorText = names.join(', ');
+      }
+    }
+
     return Articles(
       id: json['id'] ?? 0,
       title: json['title'] ?? '',
-      authors: json['authors'] != null ? (json['authors']['name'] ?? '') : '',
+      authors: authorText,
       url: json['url'] ?? '',
-      image_url: json['image_url'] ?? '',
-      news_site: json['news_site'] ?? '',
+      imageUrl: json['image_url'] ?? '',
+      newsSite: json['news_site'] ?? '',
       summary: json['summary'] ?? '',
-      published_at: json['published_at'] ?? '',
+      publishedAt: json['published_at'] ?? '',
     );
   }
 
@@ -38,10 +50,10 @@ class Articles {
       'title': title,
       'authors': authors,
       'url': url,
-      'image_url': image_url,
-      'news_site': news_site,
+      'image_url': imageUrl,
+      'news_site': newsSite,
       'summary': summary,
-      'published_at': published_at,
+      'published_at': publishedAt,
     };
   }
 
@@ -49,12 +61,12 @@ class Articles {
     return Articles(
       id: map['id'] ?? 0,
       title: map['title'] ?? '',
-      authors: map['authors'] != null ? (map['authors']['name'] ?? '') : '',
+      authors: map['authors'] ?? 'Unknown Author',
       url: map['url'] ?? '',
-      image_url: map['image_url'] ?? '',
-      news_site: map['news_site'] ?? '',
+      imageUrl: map['image_url'] ?? '',
+      newsSite: map['news_site'] ?? '',
       summary: map['summary'] ?? '',
-      published_at: map['published_at'] ?? '',
+      publishedAt: map['published_at'] ?? '',
     );
   }
 }

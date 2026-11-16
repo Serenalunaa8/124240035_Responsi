@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:responsi_124240035/models/article.dart';
+import '../services/bookmark_service.dart';
 import '../theme/app_theme.dart';
 import '../widget/logout_modal.dart';
 import 'home_screen.dart';
 import 'bookmark_screen.dart';
 
 class MainNavScreen extends StatefulWidget {
-  const MainNavScreen({super.key});
+  final String? initialUsername;
+  const MainNavScreen({super.key, this.initialUsername});
 
   @override
   State<MainNavScreen> createState() => _MainNavScreenState();
@@ -15,53 +16,77 @@ class MainNavScreen extends StatefulWidget {
 
 class _MainNavScreenState extends State<MainNavScreen> {
   int _currentIndex = 0;
+  late String _username;
 
-  final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
-  final GlobalKey<FavoriteScreenState> _favoriteKey =
-      GlobalKey<FavoriteScreenState>();
+  final _homeKey = GlobalKey<HomeScreenState>();
+  final _bookmarkKey = GlobalKey<BookmarkScreenState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _username = widget.initialUsername ?? 'User';
+    _loadUsername();
+  }
+
+  void _loadUsername() async {
+    final user = await BookmarkService.getUsername();
+    if (mounted && user.isNotEmpty) {
+      setState(() {
+        _username = user;
+      });
+    }
+  }
+
+  void _goToBookmark() {
+    setState(() => _currentIndex = 1);
+    _bookmarkKey.currentState?.loadBookmarks();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final titles = ['BERITA', 'BOOKMARK', 'EPISODES'];
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        centerTitle: false,
         titleSpacing: 20,
         title: Row(
           children: [
-            const SizedBox(width: 12),
-            Text(
-              titles[_currentIndex],
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+            Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFFB55FE6),
+                boxShadow: [BoxShadow(color: Color(0xFFB55FE6), blurRadius: 8, spreadRadius: 2)],
               ),
             ),
+            const SizedBox(width: 10),
+            Text('Halo, $_username!', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
           ],
         ),
         actions: [
-          GestureDetector(
-            onTap: () => LogoutModal.show(context),
-            child: Container(
-              margin: const EdgeInsets.only(right: 20),
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                color: AppColors.portalGreen,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.person,
-                color: AppColors.onPortalGreen,
-                size: 20,
-              ),
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF131722), border: Border.all(color: const Color(0x24FFFFFF))),
+              child: const Icon(Icons.bookmark_border_rounded, color: Colors.white, size: 19),
             ),
+            onPressed: _goToBookmark,
           ),
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF1E172E),
+                border: Border.all(color: const Color(0xFFB55FE6), width: 1.5),
+              ),
+              child: const Icon(Icons.person_rounded, color: Color(0xFFB55FE6), size: 19),
+            ),
+            onPressed: () => LogoutModal.show(context),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: IndexedStack(
@@ -69,56 +94,29 @@ class _MainNavScreenState extends State<MainNavScreen> {
         children: [
           HomeScreen(key: _homeKey),
           BookmarkScreen(key: _bookmarkKey),
-          const ArticleScreen(),
         ],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF11161B),
-          border: Border(
-            top: BorderSide(color: Color(0x14FFFFFF), width: 1),
-          ),
+          color: Color(0xFF0A0D15),
+          border: Border(top: BorderSide(color: Color(0x18FFFFFF), width: 1)),
         ),
         child: BottomNavigationBar(
-          backgroundColor: const Color(0xFF11161B),
+          backgroundColor: const Color(0xFF0A0D15),
           elevation: 0,
-          type: BottomNavigationBarType.fixed,
           currentIndex: _currentIndex,
-          selectedItemColor: AppColors.portalGreen,
-          unselectedItemColor: const Color(0xFF6B7280),
-          selectedLabelStyle: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.w700,
-            fontSize: 9.5,
-            letterSpacing: 0.8,
-          ),
-          unselectedLabelStyle: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.w600,
-            fontSize: 9.5,
-            letterSpacing: 0.8,
-          ),
+          selectedItemColor: const Color(0xFFB55FE6),
+          unselectedItemColor: const Color(0xFF64748B),
+          selectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 10),
+          unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 10),
           onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            if (index == 0) {
-              _homeKey.currentState?.refreshFavorites();
-            } else if (index == 1) {
-              _favoriteKey.currentState?.loadFavorites();
-            }
+            setState(() => _currentIndex = index);
+            if (index == 0) _homeKey.currentState?.refreshBookmarks();
+            if (index == 1) _bookmarkKey.currentState?.loadBookmarks();
           },
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded, size: 21),
-              label: 'BERITA',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.favorite_rounded, size: 21),
-              label: 'BOOKMARK',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.live_tv_rounded, size: 21),
-              label: 'EPISODES',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.dashboard_customize_rounded, size: 21), label: 'BERITA'),
+            BottomNavigationBarItem(icon: Icon(Icons.bookmark_rounded, size: 21), label: 'DISIMPAN'),
           ],
         ),
       ),

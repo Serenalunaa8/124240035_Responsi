@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/article.dart';
 import '../services/api_service.dart';
 import '../services/bookmark_service.dart';
-import '../theme/app_theme.dart';
 import 'detail_berita.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,8 +18,10 @@ class HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
-  String _selectedNewsSite = 'All';
-  final List<String> _NewsSiteFilters = ['All', 'NASA', 'SpacePolicyOnline.com', 'Space Scout', 'Spaceflight Now', 'Arstechnica', 'European Spaceflight'];
+  String _selectedNewsSite = 'Semua';
+  final List<String> _newsSiteFilters = [
+    'Semua', 'NASA', 'SpaceNews', 'Spaceflight Now', 'Arstechnica', 'SpacePolicyOnline.com', 'European Spaceflight'
+  ];
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -35,12 +36,10 @@ class HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> refreshbookmarks() async {
-    final favs = await bookmarkService.getbookmarks();
+  Future<void> refreshBookmarks() async {
+    final bookmarks = await BookmarkService.getBookmarks();
     if (mounted) {
-      setState(() {
-        _bookmarkIds = favs.map((c) => c.id).toSet();
-      });
+      setState(() => _bookmarkIds = bookmarks.map((item) => item.id).toSet());
     }
   }
 
@@ -52,30 +51,31 @@ class HomeScreenState extends State<HomeScreen> {
 
     try {
       final articles = await ApiService.getArticles(
-        NewsSite : _selectedNewSite == 'All' ? null : _selectedNewSite,
-        title: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
+        newsSite: _selectedNewsSite,
+        search: _searchController.text.trim(),
+        limit: 20,
       );
-      final favs = await bookmarkService.getbookmarks();
+      final bookmarks = await BookmarkService.getBookmarks();
 
       if (mounted) {
         setState(() {
           _articles = articles;
-          _bookmarkIds = favs.map((c) => c.id).toSet();
+          _bookmarkIds = bookmarks.map((item) => item.id).toSet();
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (error) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = error.toString().replaceFirst('Exception: ', '');
           _isLoading = false;
         });
       }
     }
   }
 
-  Future<void> _handleTogglebookmark(Articles article) async {
-    final isAdded = await bookmarkService.togglebookmark(article);
+  Future<void> _toggleBookmark(Articles article) async {
+    final isAdded = await BookmarkService.toggleBookmark(article);
     if (!mounted) return;
 
     setState(() {
@@ -89,34 +89,22 @@ class HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          isAdded
-              ? '${article.title} ditambahkan ke bookmark!'
-              : '${article.title} dihapus dari bookmark!',
-        ),
-        backgroundColor: isAdded ? AppColors.portalGreen : AppColors.statusUnknown,
+        content: Text(isAdded ? '${article.title} ditambahkan!' : '${article.title} dihapus!'),
+        backgroundColor: isAdded ? Colors.green : Colors.red,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
-  Color _getNewsSiteColor(String NewsSite) {
-    switch (NewsSite.toLowerCase()) {
-      case 'NASA':
-        return AppColors.statusUnknown;
-      case 'SpacePolicyOnline.com':
-        return AppColors.statusUnknown;
-      case 'Space Scout':
-        return AppColors.statusUnknown;
-      case 'Spaceflight Now':
-        return AppColors.statusUnknown;
-      case 'Arstechnica':
-        return AppColors.statusUnknown;
-      case 'European Spaceflight':
-        return AppColors.statusUnknown;
-      default:
-        return AppColors.statusUnknown;
+  Color _getNewsSiteColor(String site) {
+    switch (site.toLowerCase()) {
+      case 'nasa': return const Color(0xFF3B82F6);
+      case 'spacenews': return const Color(0xFF06B6D4);
+      case 'spaceflight now': return const Color(0xFFC084FC);
+      case 'arstechnica': return const Color(0xFFFB7185);
+      case 'european spaceflight': return const Color(0xFF34D399);
+      default: return const Color(0xFF38BDF8);
     }
   }
 
@@ -125,451 +113,238 @@ class HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Discover Universe',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.24,
-                ),
-              ),
+              Text('SpaceNews Explorer', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
               const SizedBox(height: 4),
-              Text(
-                'Meet the chaotic beings and variants who make this multiverse extraordinary.',
-                style: GoogleFonts.dmSans(
-                  fontSize: 12.5,
-                  color: AppColors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
+              Text('Eksplorasi berita antariksa terkini dan dokumentasi kosmis dunia.', style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF8E9AA8))),
             ],
           ),
         ),
+        const SizedBox(height: 16),
 
-        const SizedBox(height: 14),
-
-        // Search Bar dengan Icon Filter / Tune
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.cardSurface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.cardBorder),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 14),
-                const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    style: GoogleFonts.dmSans(color: AppColors.textPrimary, fontSize: 13.5),
-                    decoration: InputDecoration(
-                      hintText: 'Search article, alien, robot...',
-                      hintStyle: GoogleFonts.dmSans(color: AppColors.textSecondary, fontSize: 13.5),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onSubmitted: (_) => _loadData(),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFF131722),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x1FFFFFFF)),
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 14),
+              const Icon(Icons.search_rounded, color: Color(0xFF64748B), size: 21),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 13),
+                  decoration: const InputDecoration(
+                    hintText: 'Cari berita antariksa, roket, galaksi...',
+                    hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    border: InputBorder.none,
                   ),
+                  onSubmitted: (_) => _loadData(),
                 ),
-                if (_searchController.text.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
-                    onPressed: () {
-                      _searchController.clear();
-                      _loadData();
-                    },
-                  ),
-                Container(
-                  margin: const EdgeInsets.only(right: 6),
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B2026),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.tune, color: AppColors.textSecondary, size: 18),
-                ),
-              ],
-            ),
+              ),
+              IconButton(icon: const Icon(Icons.tune_rounded, color: Color(0xFF8E9AA8), size: 20), onPressed: _loadData),
+            ],
           ),
         ),
+        const SizedBox(height: 16),
 
-        const SizedBox(height: 12),
-
-        // Filter NewsSite karakter
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: _NewsSiteFilters.map((NewsSite) {
-              final isSelected = _selectedNewsSite.toLowerCase() == NewsSite.toLowerCase();
-              final isAll = NewsSite.toLowerCase() == 'all';
-              final label = isAll
-                  ? 'All (826)'
-                  : NewsSite == 'unknown'
-                      ? 'Unknown'
-                      : NewsSite;
-
-              final dotColor = isAll
-                  ? Colors.transparent
-                  : _getNewsSiteColor(NewsSite);
-
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(9999),
-                  onTap: () {
-                    if (_selectedNewsSite != NewsSite) {
-                      setState(() {
-                        _selectedNewsSite = NewsSite;
-                      });
-                      _loadData();
-                    }
-                  },
-                  child: Container(
-                    height: 32,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.portalGreen
-                          : const Color(0xFF1B2026),
-                      borderRadius: BorderRadius.circular(9999),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.portalGreen
-                            : AppColors.cardBorder,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (!isAll) ...[
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: dotColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: dotColor.withValues(alpha: 0.8),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                        Text(
-                          label,
-                          style: GoogleFonts.spaceGrotesk(
-                            color: isSelected
-                                ? AppColors.onPortalGreen
-                                : AppColors.textSecondary,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: _newsSiteFilters.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final site = _newsSiteFilters[index];
+              final isSelected = _selectedNewsSite == site;
+              return InkWell(
+                borderRadius: BorderRadius.circular(99),
+                onTap: () {
+                  if (_selectedNewsSite != site) {
+                    setState(() => _selectedNewsSite = site);
+                    _loadData();
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? const LinearGradient(colors: [Color(0xFF8A3FFC), Color(0xFFB55FE6)]) : null,
+                    color: isSelected ? null : const Color(0xFF131722),
+                    borderRadius: BorderRadius.circular(99),
+                    border: Border.all(color: isSelected ? Colors.transparent : const Color(0x22FFFFFF)),
+                  ),
+                  child: Row(
+                    children: [
+                      if (site != 'Semua') ...[
+                        Container(width: 6, height: 6, decoration: BoxDecoration(color: _getNewsSiteColor(site), shape: BoxShape.circle)),
+                        const SizedBox(width: 7),
                       ],
-                    ),
+                      Text(site, style: GoogleFonts.plusJakartaSans(color: isSelected ? Colors.white : const Color(0xFFE2E8F0), fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600, fontSize: 12.5)),
+                    ],
                   ),
                 ),
               );
-            }).toList(),
+            },
           ),
         ),
+        const SizedBox(height: 18),
 
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('TERBARU & UTAMA', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFFCBD5E1), letterSpacing: 0.8)),
+              Text('${_articles.length} Berita', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFFB55FE6))),
+            ],
+          ),
+        ),
         const SizedBox(height: 12),
 
-        // Grid karakter
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: _loadData,
-            color: AppColors.portalGreen,
-            backgroundColor: AppColors.cardSurface,
-            child: _buildGridBody(),
-          ),
-        ),
+        Expanded(child: _buildBody()),
       ],
     );
   }
 
-  Widget _buildGridBody() {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.portalGreen),
-      );
-    }
-
+  Widget _buildBody() {
+    if (_isLoading) return const Center(child: CircularProgressIndicator(color: Color(0xFFB55FE6)));
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.cloud_off, size: 64, color: AppColors.NewsSiteDead),
-              const SizedBox(height: 12),
-              Text(
-                'Koneksi Antardimensi Terputus',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.dmSans(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _loadData,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Coba Lagi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.portalGreen,
-                  foregroundColor: AppColors.onPortalGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_articles.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search_off, size: 64, color: AppColors.textSecondary),
-            const SizedBox(height: 12),
-            Text(
-              'Tidak ada karakter yang ditemukan',
-              style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.textSecondary),
-            ),
+            const Icon(Icons.cloud_off, size: 48, color: Colors.red),
+            const SizedBox(height: 10),
+            Text('Gagal memuat berita', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ElevatedButton(onPressed: _loadData, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB55FE6)), child: const Text('Coba Lagi', style: TextStyle(color: Colors.white))),
           ],
         ),
       );
     }
+    if (_articles.isEmpty) return const Center(child: Text('Tidak ada berita ditemukan', style: TextStyle(color: Color(0xFF8E9AA8))));
 
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 14,
-        childAspectRatio: 0.63,
-      ),
-      itemCount: _articles.length,
-      itemBuilder: (context, index) {
-        final article = _articles[index];
-        final isFav = _bookmarkIds.contains(article.id);
-        final NewsSiteColor = _getNewsSiteColor(article.NewsSite);
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: const Color(0xFFB55FE6),
+      child: GridView.builder(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+          childAspectRatio: 0.58,
+        ),
+        itemCount: _articles.length,
+        itemBuilder: (context, index) {
+          final article = _articles[index];
+          final isFav = _bookmarkIds.contains(article.id);
+          final siteColor = _getNewsSiteColor(article.newsSite);
 
-        final originText = (article.authors.isNotEmpty && article.authors.first.toLowerCase() != 'unknown')
-            ? article.authors
-            : (article.name.isNotEmpty && article.name.toLowerCase() != 'unknown')
-                ? article.name
-                : 'UNKNOWN';
-
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.cardSurface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x22000000),
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DetailScreen(ch: article),
-                ),
-              );
-              refreshbookmarks();
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Bagian Gambar Atas + bookmark Floating + NewsSite Badge
-                Expanded(
-                  flex: 11,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.network(
-                        article.image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFF1B2026),
-                          child: const Center(
-                            child: Icon(Icons.person, color: AppColors.textSecondary, size: 40),
-                          ),
-                        ),
-                      ),
-
-                      // Floating bookmark Heart Button (Top Right)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: () => _handleTogglebookmark(article),
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: const Color(0xCC151A20),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.cardBorder),
-                            ),
-                            child: Icon(
-                              isFav ? Icons.bookmark : Icons.bookmark_border,
-                              color: isFav ? AppColors.portalGreen : AppColors.textSecondary,
-                              size: 17,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Floating NewsSite Badge (Bottom Left)
-                      Positioned(
-                        bottom: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xDD151A20),
-                            borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: AppColors.cardBorder),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 5,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: NewsSiteColor,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: NewsSiteColor.withValues(alpha: 0.8),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                article.NewsSite.toUpperCase(),
-                                style: GoogleFonts.spaceGrotesk(
-                                  color: NewsSiteColor,
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.6,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Bagian Informasi Bawah (Nama, Species, Location + Arrow)
-                Expanded(
-                  flex: 7,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          return Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF131722),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0x1AFFFFFF)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (context) => DetailScreen(article: article)));
+                refreshBookmarks();
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 12,
+                    child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              article.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              article.species,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.dmSans(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // Info lokasi dan origin
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                originText.toUpperCase(),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.rickBlue,
-                                  letterSpacing: 0.4,
+                        article.imageUrl.isNotEmpty
+                            ? Image.network(
+                                article.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: const Color(0xFF0F131D),
+                                  child: const Icon(Icons.broken_image, color: Colors.white24),
                                 ),
-                              ),
+                              )
+                            : Container(color: const Color(0xFF0F131D), child: const Icon(Icons.rocket, color: Colors.white24)),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => _toggleBookmark(article),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle, border: Border.all(color: Colors.white24)),
+                              child: Icon(isFav ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, color: isFav ? const Color(0xFFB55FE6) : Colors.white, size: 17),
                             ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.arrow_forward,
-                              size: 13,
-                              color: AppColors.rickBlue,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                            decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(99), border: Border.all(color: Colors.white12)),
+                            child: Row(
+                              children: [
+                                Container(width: 5, height: 5, decoration: BoxDecoration(color: siteColor, shape: BoxShape.circle)),
+                                const SizedBox(width: 5),
+                                Text(article.newsSite.isNotEmpty ? article.newsSite : 'News', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    flex: 8,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(article.publishedAt.split('T').first, style: GoogleFonts.plusJakartaSans(fontSize: 10, color: const Color(0xFF64748B))),
+                              const SizedBox(height: 3),
+                              Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white, height: 1.25)),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('3 mnt baca', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: const Color(0xFF64748B))),
+                              Text('Misi APOD', style: GoogleFonts.plusJakartaSans(fontSize: 9.5, fontWeight: FontWeight.w700, color: const Color(0xFFB55FE6))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

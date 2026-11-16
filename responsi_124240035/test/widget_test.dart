@@ -1,29 +1,28 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:responsi_124240035/main.dart';
+import 'package:responsi_124240035/models/article.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Articles model parsing test', () {
+    final json = {
+      'id': 1,
+      'title': 'Starship Flight Test',
+      'url': 'https://example.com/article',
+      'image_url': 'https://example.com/image.jpg',
+      'news_site': 'NASA',
+      'summary': 'Summary of flight test',
+      'published_at': '2026-11-16T12:00:00Z',
+      'authors': [
+        {'name': 'John Explorer'}
+      ],
+    };
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final article = Articles.fromJson(json);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(article.id, 1);
+    expect(article.title, 'Starship Flight Test');
+    expect(article.authors, 'John Explorer');
+    expect(article.newsSite, 'NASA');
+    expect(article.imageUrl, 'https://example.com/image.jpg');
+    expect(article.summary, 'Summary of flight test');
   });
 }

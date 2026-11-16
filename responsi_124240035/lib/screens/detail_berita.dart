@@ -1,222 +1,232 @@
 import 'package:flutter/material.dart';
-import '../models/episode.dart';
-import '../theme/app_theme.dart';
-import '../widgets/logout_modal.dart';
-import '../widgets/rick_morty_logo.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../models/article.dart';
+import '../services/bookmark_service.dart';
+import '../widget/logout_modal.dart';
 
-class EpisodeDetailScreen extends StatelessWidget {
-  final Episode episode;
+class DetailScreen extends StatefulWidget {
+  final Articles article;
+  const DetailScreen({super.key, required this.article});
 
-  const EpisodeDetailScreen({super.key, required this.episode});
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
 
-  String _formatSeasonEpisode(String code) {
-    final regex = RegExp(r'S(\d+)E(\d+)', caseSensitive: false);
-    final match = regex.firstMatch(code);
-    if (match != null) {
-      final season = int.tryParse(match.group(1) ?? '1') ?? 1;
-      final ep = int.tryParse(match.group(2) ?? '1') ?? 1;
-      return 'Season $season, Episode $ep';
+class _DetailScreenState extends State<DetailScreen> {
+  bool _isBookmarked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBookmarkStatus();
+  }
+
+  void _checkBookmarkStatus() async {
+    final status = await BookmarkService.isBookmark(widget.article.id);
+    if (mounted) {
+      setState(() {
+        _isBookmarked = status;
+      });
     }
-    return code;
+  }
+
+  void _toggleBookmark() async {
+    final isAdded = await BookmarkService.toggleBookmark(widget.article);
+    if (!mounted) return;
+
+    setState(() {
+      _isBookmarked = isAdded;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${widget.article.title} ${isAdded ? "berhasil ditambahkan ke simpanan" : "dihapus dari simpanan"}!',
+        ),
+        backgroundColor: isAdded ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
+  void _openArticleUrl() async {
+    final uri = Uri.parse(widget.article.url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final article = widget.article;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF090C13),
       appBar: AppBar(
-        title: Row(
-          children: [
-            const RickMortyLogo(
-              height: 22,
-              glowRadius: 12,
-              glowSpread: 2,
-              glowOpacity: 0.6,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                episode.name,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-            ),
-          ],
+        backgroundColor: const Color(0xFF090C13),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.pop(context),
         ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
+        title: Text(
+          'Detail Berita',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
         actions: [
-          GestureDetector(
-            onTap: () => LogoutModal.show(context),
-            child: Container(
-              margin: const EdgeInsets.only(right: 20),
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                color: AppColors.portalGreen,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.person,
-                color: AppColors.onPortalGreen,
-                size: 20,
-              ),
+          IconButton(
+            icon: Icon(
+              _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              color: _isBookmarked ? const Color(0xFFB55FE6) : Colors.white,
             ),
+            onPressed: _toggleBookmark,
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_rounded, color: Colors.white),
+            onPressed: () => LogoutModal.show(context),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header episode
-            Container(
-              padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
-                color: AppColors.cardSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.cardBorder),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.rickBlue.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
+            AspectRatio(
+              aspectRatio: 16 / 10,
+              child: article.imageUrl.isNotEmpty
+                  ? Image.network(
+                      article.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: const Color(0xFF131722),
+                        child: const Icon(Icons.rocket, color: Colors.white24),
+                      ),
+                    )
+                  : Container(color: const Color(0xFF131722)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.rickBlue.withValues(alpha: 0.4)),
-                    ),
-                    child: const Icon(
-                      Icons.movie_creation_outlined,
-                      size: 36,
-                      color: AppColors.rickBlue,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFB55FE6).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          article.newsSite.toUpperCase(),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFB55FE6),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        article.publishedAt.split('T').first,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: const Color(0xFF8E9AA8),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Text(
-                    episode.name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                    article.title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  // Badge episode
+                  const SizedBox(height: 14),
+
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.rickBlue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(9999),
-                      border: Border.all(color: AppColors.rickBlue.withValues(alpha: 0.4)),
+                      color: const Color(0xFF131722),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0x1AFFFFFF)),
                     ),
-                    child: Text(
-                      _formatSeasonEpisode(episode.episode),
-                      style: const TextStyle(
-                        color: AppColors.rickBlue,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        letterSpacing: 0.5,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.person_pin_rounded, color: Color(0xFFB55FE6), size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            article.authors.isEmpty ? 'Unknown' : article.authors,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'Ringkasan Berita',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    article.summary.isNotEmpty ? article.summary : 'Tidak ada ringkasan.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5,
+                      color: const Color(0xFF94A3B8),
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8A3FFC), Color(0xFFB55FE6)],
+                      ),
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: _openArticleUrl,
+                      icon: const Icon(Icons.open_in_browser_rounded, color: Colors.white),
+                      label: Text(
+                        'Read Full Article',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Rincian informasi
-            Container(
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: AppColors.cardSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.cardBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'TRANSMISSION DETAILS',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.portalGreen,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const Divider(color: Color(0x1AFFFFFF), thickness: 1, height: 20),
-
-                  _buildDetailTile(
-                    icon: Icons.title,
-                    label: 'Judul Episode',
-                    value: episode.name,
-                  ),
-                  _buildDetailTile(
-                    icon: Icons.tag,
-                    label: 'Kode Episode',
-                    value: episode.episode,
-                  ),
-                  _buildDetailTile(
-                    icon: Icons.calendar_month_outlined,
-                    label: 'Tanggal Rilis',
-                    value: episode.airDate,
-                  ),
-                  _buildDetailTile(
-                    icon: Icons.groups_outlined,
-                    label: 'Karakter Tampil',
-                    value: '${episode.characters.length} Karakter',
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDetailTile({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.rickBlue, size: 20),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 130,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          const Text(': ', style: TextStyle(color: AppColors.textSecondary)),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-            ),
-          ),
-        ],
       ),
     );
   }

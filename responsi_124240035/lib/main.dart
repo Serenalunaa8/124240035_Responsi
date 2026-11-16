@@ -8,18 +8,18 @@ import 'screens/main_nav_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Hive.initFlutter(); // inisialisasi hive
+    await Hive.initFlutter();
     if (!Hive.isBoxOpen('users')) {
-      await Hive.openBox('users'); // buka box users
+      await Hive.openBox('users');
     }
     if (!Hive.isBoxOpen('user_emails')) {
-      await Hive.openBox('user_emails'); // buka box user_emails
+      await Hive.openBox('user_emails');
     }
   } catch (e) {
     debugPrint('Hive init error: $e');
   }
 
-  final isLoggedIn = await FavoriteService.isLoggedIn();
+  final isLoggedIn = await BookmarkService.isLoggedIn();
   runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Rick & Morty Multiverse Explorer',
+      title: 'SpaceNews Explorer',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: isLoggedIn ? const MainNavScreen() : const LandingScreen(),
